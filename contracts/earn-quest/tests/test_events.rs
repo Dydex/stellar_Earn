@@ -56,15 +56,16 @@ fn test_full_quest_lifecycle_events() {
     let t_name: Symbol = topics.get(0).unwrap().into_val(&env);
     let t_id: Symbol = topics.get(1).unwrap().into_val(&env);
     let t_creator: Address = topics.get(2).unwrap().into_val(&env);
+    let t_asset: Address = topics.get(3).unwrap().into_val(&env);
 
     assert_eq!(t_name, symbol_short!("quest_reg"));
     assert_eq!(t_id, quest_id);
     assert_eq!(t_creator, creator);
+    assert_eq!(t_asset, token_address);
 
-    // Verify Data: (reward_asset, reward_amount, verifier, deadline)
-    let (asset_data, amount_data, verifier_data, deadline_data): (Address, i128, Address, u64) =
+    // Verify Data: (reward_amount, verifier, deadline)
+    let (amount_data, verifier_data, deadline_data): (i128, Address, u64) =
         data.into_val(&env);
-    assert_eq!(asset_data, token_address);
     assert_eq!(amount_data, reward_amount);
     assert_eq!(verifier_data, verifier);
     assert_eq!(deadline_data, deadline);
@@ -114,14 +115,15 @@ fn test_full_quest_lifecycle_events() {
     let t_name: Symbol = topics.get(0).unwrap().into_val(&env);
     let t_id: Symbol = topics.get(1).unwrap().into_val(&env);
     let t_sub: Address = topics.get(2).unwrap().into_val(&env);
+    let t_asset: Address = topics.get(3).unwrap().into_val(&env);
 
     assert_eq!(t_name, symbol_short!("claimed"));
     assert_eq!(t_id, quest_id);
     assert_eq!(t_sub, user);
+    assert_eq!(t_asset, token_address);
 
-    // Verify Data: (reward_asset, reward_amount)
-    let (claimed_asset, claimed_amount): (Address, i128) = data.into_val(&env);
-    assert_eq!(claimed_asset, token_address);
+    // Verify Data: (reward_amount)
+    let (claimed_amount,): (i128,) = data.into_val(&env);
     assert_eq!(claimed_amount, reward_amount);
 
     // Verify the XP awarded event (last event)

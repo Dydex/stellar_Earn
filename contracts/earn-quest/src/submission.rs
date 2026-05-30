@@ -68,7 +68,7 @@ pub fn approve_submission(
         &SubmissionStatus::Approved,
     )?;
     // Validate verifier address
-    validation::validate_addresses_distinct(verifier, &quest.verifier)?;
+    validation::validate_addresses_distinct(verifier, submitter)?;
 
     // ═══════════════════════════════════════════════════════
     // ADD THIS BLOCK — escrow check before approval
