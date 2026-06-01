@@ -1,6 +1,7 @@
 'use client';
 
 import type { Activity } from '@/lib/types/profile';
+import { useFormatter } from '@/lib/hooks/useFormatter';
 
 interface ActivityFeedProps {
   activities: Activity[];
@@ -8,6 +9,10 @@ interface ActivityFeedProps {
 }
 
 export function ActivityFeed({ activities, isLoading }: ActivityFeedProps) {
+  // useFormatter resolves navigator.language once — date() is memoised
+  // and locale-bound for the lifetime of this component instance.
+  const { date } = useFormatter();
+
   if (isLoading) {
     return (
       <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
@@ -44,35 +49,23 @@ export function ActivityFeed({ activities, isLoading }: ActivityFeedProps) {
 
   const getActivityIcon = (type: string) => {
     switch (type) {
-      case 'quest_completed':
-        return '✅';
-      case 'quest_created':
-        return '➕';
-      case 'submission_approved':
-        return '✅';
-      case 'level_up':
-        return '🏆';
-      case 'badge_earned':
-        return '🏅';
-      default:
-        return '📰';
+      case 'quest_completed':    return '✅';
+      case 'quest_created':      return '➕';
+      case 'submission_approved': return '✅';
+      case 'level_up':           return '🏆';
+      case 'badge_earned':       return '🏅';
+      default:                   return '📰';
     }
   };
 
   const getActivityColor = (type: string) => {
     switch (type) {
-      case 'quest_completed':
-        return 'text-green-400';
-      case 'quest_created':
-        return 'text-blue-400';
-      case 'submission_approved':
-        return 'text-green-400';
-      case 'level_up':
-        return 'text-yellow-400';
-      case 'badge_earned':
-        return 'text-purple-400';
-      default:
-        return 'text-zinc-400';
+      case 'quest_completed':    return 'text-green-400';
+      case 'quest_created':      return 'text-blue-400';
+      case 'submission_approved': return 'text-green-400';
+      case 'level_up':           return 'text-yellow-400';
+      case 'badge_earned':       return 'text-purple-400';
+      default:                   return 'text-zinc-400';
     }
   };
 
@@ -88,11 +81,7 @@ export function ActivityFeed({ activities, isLoading }: ActivityFeedProps) {
           >
             <div className="flex-shrink-0 mt-1">
               <div
-                className={`
-                w-10 h-10 rounded-full flex items-center justify-center
-                ${getActivityColor(activity.type)}
-                bg-zinc-800
-              `}
+                className={`w-10 h-10 rounded-full flex items-center justify-center ${getActivityColor(activity.type)} bg-zinc-800`}
               >
                 {getActivityIcon(activity.type)}
               </div>
@@ -103,15 +92,23 @@ export function ActivityFeed({ activities, isLoading }: ActivityFeedProps) {
               <p className="text-sm text-zinc-400 mb-2">
                 {activity.description}
               </p>
+
               <div className="flex items-center gap-2 text-xs text-zinc-500">
-                <span>
-                  {new Date(activity.timestamp).toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
-                </span>
+                {/*
+                  ── Date formatting change ──────────────────────────────────
+                  Before:
+                    new Date(activity.timestamp).toLocaleDateString('en-US', {
+                      month: 'short', day: 'numeric',
+                      hour: '2-digit', minute: '2-digit',
+                    })
+                    → Hardcoded 'en-US' — shows "Jun 1, 02:30 PM" for all users.
+
+                  After: date(activity.timestamp, 'datetime')
+                    → Uses navigator.language — shows locale-correct format,
+                      e.g. "1 Jun. 14:30" for fr-FR or "1 Jun. 2:30 PM" for en-GB.
+                  ─────────────────────────────────────────────────────────────
+                */}
+                <span>{date(activity.timestamp, 'datetime')}</span>
                 {activity.relatedId && (
                   <span className="px-2 py-1 bg-zinc-800 rounded">
                     ID: {activity.relatedId}

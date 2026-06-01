@@ -2,6 +2,7 @@
 
 import type { UserStats } from '@/lib/types/dashboard';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { useFormatter } from '@/lib/hooks/useFormatter';
 
 interface StatsCardsProps {
   stats: UserStats | null;
@@ -108,7 +109,10 @@ function StatCard({
 }
 
 export function StatsCards({ stats, isLoading }: StatsCardsProps) {
-  // Use success rate from stats if available, otherwise calculate
+  // useFormatter reads navigator.language once — all returned functions
+  // are memoised and locale-bound, no prop drilling needed.
+  const { reward } = useFormatter();
+
   const successRate =
     stats?.successRate !== undefined
       ? stats.successRate
@@ -121,6 +125,34 @@ export function StatsCards({ stats, isLoading }: StatsCardsProps) {
         : 94;
 
   const totalEarned = Number(stats?.totalEarned || 2450);
+
+  // ── Formatted values ──────────────────────────────────────────────────────
+  //
+  // Before: `${totalEarned.toLocaleString()} XLM`
+  //   → Always used runtime default locale (unpredictable on server),
+  //     no control over fraction digits, asset label not separated.
+  //
+  // After: reward() with type:'custom' and explicit label
+  //   → Locale-correct digit grouping (e.g. "2,450 XLM" en-US,
+  //     "2.450 XLM" de-DE), consistent across SSR and client.
+  //
+  // Before: `${successRate}%`
+  //   → Raw concatenation — some locales place the % differently
+  //     (e.g. French uses "94 %" with a non-breaking space before %).
+  //
+  // After: reward() with type:'percentage'
+  //   → Intl.NumberFormat handles symbol placement and spacing
+  //     correctly for every locale automatically.
+  //
+  const formattedEarned = reward(totalEarned, {
+    type: 'custom',
+    label: { singular: 'XLM', plural: 'XLM' },
+  });
+
+  const formattedSuccessRate = reward(successRate / 100, {
+    type: 'percentage',
+    maximumFractionDigits: 0,
+  });
 
   return (
     <div
@@ -154,7 +186,7 @@ export function StatsCards({ stats, isLoading }: StatsCardsProps) {
       />
       <StatCard
         title="Earned"
-        value={`${totalEarned.toLocaleString()} XLM`}
+        value={formattedEarned}
         icon={
           <span className="text-amber-400" aria-hidden="true">
             💰
@@ -166,7 +198,7 @@ export function StatsCards({ stats, isLoading }: StatsCardsProps) {
       />
       <StatCard
         title="Success Rate"
-        value={`${successRate}%`}
+        value={formattedSuccessRate}
         icon={
           <span className="text-purple-400" aria-hidden="true">
             📈

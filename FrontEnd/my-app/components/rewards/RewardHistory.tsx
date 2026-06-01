@@ -1,12 +1,15 @@
 'use client';
 
 import { ClaimResult } from '@/lib/stellar/claim';
+import { useFormatter } from '@/lib/hooks/useFormatter';
 
 interface RewardHistoryProps {
   claims: ClaimResult[];
 }
 
 export function RewardHistory({ claims }: RewardHistoryProps) {
+  const { date, reward } = useFormatter();
+
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
@@ -45,14 +48,43 @@ export function RewardHistory({ claims }: RewardHistoryProps) {
                     key={claim.transactionHash || index}
                     className="group hover:bg-zinc-50 dark:hover:bg-zinc-800/30 transition-colors"
                   >
+                    {/*
+                      ── Date change ────────────────────────────────────────
+                      Before: new Date(claim.timestamp).toLocaleDateString()
+                        → No locale argument — falls back to the runtime
+                          default which is 'en-US' on most servers, but the
+                          user's locale on the client → hydration mismatch.
+
+                      After: date(claim.timestamp, 'medium')
+                        → Reads navigator.language via useFormatter.
+                          Consistent between renders. e.g. "May 30, 2026"
+                          (en-US), "30 mai 2026" (fr-FR), "30. Mai 2026" (de-DE).
+                      ──────────────────────────────────────────────────────
+                    */}
                     <td className="px-4 py-4 text-zinc-600 dark:text-zinc-400">
-                      {new Date(claim.timestamp).toLocaleDateString()}
+                      {date(claim.timestamp, 'medium')}
                     </td>
+
+                    {/*
+                      ── Amount change ──────────────────────────────────────
+                      Before: {claim.amount} Tokens
+                        → Raw number, no digit grouping.
+                          Large amounts like 1200 show as "1200 Tokens".
+
+                      After: reward() with type:'custom' and Token label
+                        → "1,200 Tokens" (en-US) / "1.200 Tokens" (de-DE).
+                          Number() cast handles both number and string amount.
+                      ──────────────────────────────────────────────────────
+                    */}
                     <td className="px-4 py-4">
                       <span className="font-medium text-zinc-900 dark:text-zinc-50">
-                        {claim.amount} Tokens
+                        {reward(Number(claim.amount), {
+                          type: 'custom',
+                          label: { singular: 'Token', plural: 'Tokens' },
+                        })}
                       </span>
                     </td>
+
                     <td className="px-4 py-4">
                       <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-300">
                         Success
