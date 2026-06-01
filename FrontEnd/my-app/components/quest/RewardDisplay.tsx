@@ -1,5 +1,7 @@
 'use client';
 
+import { useFormatter } from '@/lib/hooks/useFormatter';
+
 interface RewardDisplayProps {
   rewardAmount: number;
   rewardAsset: string;
@@ -11,6 +13,38 @@ export function RewardDisplay({
   rewardAsset,
   xpReward,
 }: RewardDisplayProps) {
+  const { reward } = useFormatter();
+
+  // ── Formatted values ────────────────────────────────────────────────────
+  //
+  // Before: {rewardAmount} {rewardAsset}
+  //   → Raw number concatenation — "1200 XLM" regardless of locale.
+  //     A German user should see "1.200 XLM", a French user "1 200 XLM".
+  //
+  // After: reward() with type:'custom' and rewardAsset as the label
+  //   → Locale-correct digit grouping, asset ticker always preserved.
+  //   → XLM is an invariant ticker so singular === plural.
+  //
+  // Before: +{xpReward} XP
+  //   → Same issue — raw number, no grouping for large XP values.
+  //
+  // After: reward() with type:'points' and XP label, leading '+' preserved
+  //   → "1,200 XP" (en-US) / "1.200 XP" (de-DE) etc.
+  //
+  // Both aria-labels updated to use the same formatted strings so screen
+  // readers announce the same value the sighted user sees.
+  // ─────────────────────────────────────────────────────────────────────────
+
+  const formattedTokenReward = reward(rewardAmount, {
+    type: 'custom',
+    label: { singular: rewardAsset, plural: rewardAsset },
+  });
+
+  const formattedXpReward = reward(xpReward, {
+    type: 'points',
+    label: { singular: 'XP', plural: 'XP' },
+  });
+
   return (
     <div
       className="rounded-lg border border-zinc-200 bg-gradient-to-br from-orange-50 to-yellow-50 p-6 dark:border-zinc-800 dark:from-orange-900/10 dark:to-yellow-900/10"
@@ -24,7 +58,7 @@ export function RewardDisplay({
         {/* Primary Reward */}
         <div
           className="flex items-center gap-4 rounded-lg bg-white p-4 shadow-sm dark:bg-zinc-900"
-          aria-label={`Token reward: ${rewardAmount} ${rewardAsset}`}
+          aria-label={`Token reward: ${formattedTokenReward}`}
         >
           <div
             className="flex h-12 w-12 items-center justify-center rounded-full bg-orange-100 dark:bg-orange-900/30"
@@ -51,7 +85,7 @@ export function RewardDisplay({
               className="text-2xl font-bold text-orange-600 dark:text-orange-400"
               aria-hidden="true"
             >
-              {rewardAmount} {rewardAsset}
+              {formattedTokenReward}
             </div>
           </div>
         </div>
@@ -59,7 +93,7 @@ export function RewardDisplay({
         {/* XP Reward */}
         <div
           className="flex items-center gap-4 rounded-lg bg-white p-4 shadow-sm dark:bg-zinc-900"
-          aria-label={`Experience points reward: ${xpReward} XP`}
+          aria-label={`Experience points reward: +${formattedXpReward}`}
         >
           <div
             className="flex h-12 w-12 items-center justify-center rounded-full bg-[#089ec3]/10"
@@ -85,7 +119,7 @@ export function RewardDisplay({
               className="text-2xl font-bold text-[#089ec3]"
               aria-hidden="true"
             >
-              +{xpReward} XP
+              +{formattedXpReward}
             </div>
           </div>
         </div>

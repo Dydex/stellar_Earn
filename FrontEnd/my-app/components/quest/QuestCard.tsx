@@ -3,6 +3,7 @@
 import { memo } from 'react';
 import type { Quest } from '@/lib/types/quest';
 import { QuestDifficulty } from '@/lib/types/quest';
+import { useFormatter } from '@/lib/hooks/useFormatter';
 
 interface QuestCardProps {
   quest: Quest;
@@ -10,17 +11,26 @@ interface QuestCardProps {
   progress?: number;
 }
 
-function formatTimeRemaining(deadline?: string): string | null {
-  if (!deadline) return null;
-  const deadlineDate = new Date(deadline);
-  if (isNaN(deadlineDate.getTime())) return null;
-  const days = Math.ceil(
-    (deadlineDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)
-  );
-  if (days < 0) return 'Expired';
-  if (days === 0) return 'Today';
-  if (days === 1) return '1 day left';
-  return `${days} days left`;
+// ─── Removed: formatTimeRemaining() ───────────────────────────────────────────
+// Previously a hand-rolled English-only function that:
+//   - Could not handle locale differences (e.g. "2 days left" only in English)
+//   - Used brittle parseInt() on its own output to detect urgency
+//   - Didn't handle timezones
+// Now replaced by formatDeadline() from our i18n-formatters via useFormatter().
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Returns true when a deadline is within the next 3 days (and not yet expired).
+ * Previously this was done via `parseInt(timeLabel) <= 3` which broke for any
+ * non-English locale where the label string has a different shape.
+ * Now we compare raw ms directly — locale-independent and reliable.
+ */
+function isDeadlineUrgent(deadline?: string | null): boolean {
+  if (!deadline) return false;
+  const deadlineMs = new Date(deadline).getTime();
+  if (isNaN(deadlineMs)) return false;
+  const diffDays = (deadlineMs - Date.now()) / (1000 * 60 * 60 * 24);
+  return diffDays >= 0 && diffDays <= 3;
 }
 
 const difficultyStyles: Record<QuestDifficulty, string> = {
@@ -56,18 +66,47 @@ function avatarColor(name: string): string {
 
 export const QuestCard = memo(
   ({ quest, onClick, progress }: QuestCardProps) => {
-    const timeLabel = formatTimeRemaining(quest.deadline ?? undefined);
-    const isUrgent =
-      timeLabel && !['Expired', 'Today'].includes(timeLabel)
-        ? parseInt(timeLabel) <= 3
-        : false;
+    // useFormatter reads navigator.language once and returns pre-bound,
+    // memoised formatting functions — no locale prop drilling needed.
+    const { deadline, reward, compactReward } = useFormatter();
+
+    // Localised deadline label: "Ends in 3 days" | "Expired" | null
+    const timeLabel = quest.deadline
+      ? deadline(quest.deadline)
+      : null;
+
+    // Urgency check is now locale-independent (raw ms comparison)
+    const isUrgent = isDeadlineUrgent(quest.deadline);
 
     const handleClick = () => onClick?.(quest);
 
-    // Build a comprehensive accessible label
-    const rewardLabel = `${quest.rewardAmount} ${quest.rewardAsset ?? ''} and ${quest.xpReward} XP`;
+    // ── Accessible card label ────────────────────────────────────────────────
+    // Previously: raw `${quest.rewardAmount} ${quest.rewardAsset}` interpolation
+    // Now: uses formatReward so screen readers announce "500 XLM" not "500xlm"
+    // and the number is formatted with locale-correct separators.
+    const formattedRewardAmount = reward(quest.rewardAmount, {
+      type: 'custom',
+      label: {
+        singular: quest.rewardAsset ?? 'token',
+        plural: quest.rewardAsset ?? 'tokens',
+      },
+    });
+
+    const rewardLabel = `${formattedRewardAmount} and ${quest.xpReward} XP`;
     const timeInfo = timeLabel ? `, deadline: ${timeLabel}` : '';
     const cardLabel = `${quest.title}. Category: ${quest.category ?? 'Uncategorized'}, Difficulty: ${quest.difficulty}, Reward: ${rewardLabel}${timeInfo}`;
+
+    // ── Compact reward for the badge in tight card space ────────────────────
+    // Previously: `{quest.rewardAmount} {quest.rewardAsset}` — no number formatting
+    // Now: "1.2K XLM" for large values, "500 XLM" for normal values, all
+    //      with locale-correct digit grouping.
+    const compactRewardLabel = compactReward(quest.rewardAmount, {
+      type: 'custom',
+      label: {
+        singular: quest.rewardAsset ?? 'token',
+        plural: quest.rewardAsset ?? 'tokens',
+      },
+    });
 
     return (
       <article
@@ -141,6 +180,17 @@ export const QuestCard = memo(
 
         <div className="quest-card__meta" aria-hidden="true">
           <div className="quest-card__rewards">
+
+            {/* ── XLM reward badge ─────────────────────────────────────────
+                Before: {quest.rewardAmount} {quest.rewardAsset}
+                  → No number formatting, no locale awareness
+                  → "1200 XLM" regardless of user locale
+
+                After:  {compactRewardLabel}
+                  → "1.2K XLM" for large values (compact badge-friendly)
+                  → "500 XLM" for normal values
+                  → Locale-correct digit grouping in all cases
+            ────────────────────────────────────────────────────────────── */}
             <span className="quest-card__reward quest-card__reward--xlm">
               <svg
                 className="quest-card__reward-icon"
@@ -155,7 +205,7 @@ export const QuestCard = memo(
                   clipRule="evenodd"
                 />
               </svg>
-              {quest.rewardAmount} {quest.rewardAsset}
+              {compactRewardLabel}
             </span>
 
             <span className="quest-card__reward quest-card__reward--xp">
@@ -175,6 +225,15 @@ export const QuestCard = memo(
             </span>
           </div>
 
+          {/* ── Deadline badge ─────────────────────────────────────────────
+              Before: formatTimeRemaining() — English-only, brittle urgency
+                → "3 days left" always in English
+                → isUrgent relied on parseInt() of its own English output
+
+              After: deadline() from useFormatter()
+                → "Ends in 3 days" / "Se termine dans 3 jours" / etc.
+                → isUrgent uses raw ms comparison, locale-independent
+          ─────────────────────────────────────────────────────────────── */}
           {timeLabel && (
             <span
               className={`quest-card__time ${isUrgent ? 'quest-card__time--urgent' : ''}`}
