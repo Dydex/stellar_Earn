@@ -15,6 +15,7 @@ use soroban_sdk::testutils::Address as _;
 use soroban_sdk::{symbol_short, Address, Env};
 
 use crate::{EarnQuestContract, EarnQuestContractClient};
+use crate::Role;
 
 fn make_env() -> Env {
     let env = Env::default();

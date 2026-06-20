@@ -344,7 +344,7 @@ fn test_claim_pending_submission_rejected() {
     client.submit_proof(&quest_id, &submitter, &proof);
 
     // Submission is Pending, not Approved → InvalidStatusTransition
-    let result = client.try_claim_reward(, &100i128);
+    let result = client.try_claim_reward(&quest_id, &submitter, &100i128);
     assert!(result.is_err(), "claiming a pending submission must be rejected");
 }
 
@@ -365,7 +365,7 @@ fn test_claim_rejected_submission_rejected() {
     // Since there is no explicit reject_submission entry point in lib.rs we
     // verify the claim guard by attempting to claim a non-approved submission.
     // The submission is still Pending, so this tests the same guard.
-    let result = client.try_claim_reward(, &100i128);
+    let result = client.try_claim_reward(&quest_id, &submitter, &100i128);
     assert!(result.is_err(), "claiming an unapproved submission must be rejected");
     let _ = admin; // silence unused warning
 }
@@ -381,7 +381,7 @@ fn test_claim_nonexistent_submission_rejected() {
     register_quest(&env, &client, &quest_id, &creator, &token, &verifier);
 
     // No submission was ever made by `stranger`
-    let result = client.try_claim_reward(, &100i128);
+    let result = client.try_claim_reward(&quest_id, &submitter, &100i128);
     assert!(result.is_err(), "claiming for a non-existent submission must be rejected");
 }
 
