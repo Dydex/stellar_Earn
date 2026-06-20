@@ -508,8 +508,7 @@ fn test_resolve_nonexistent_dispute_rejected() {
     let (env, client, _admin, _token) = setup();
     let initiator = Address::generate(&env);
     let arbitrator = Address::generate(&env);
-
-    let result = client.try_resolve_dispute(&symbol_short!("D2"), &initiator, &arbitrator);
+    let result = client.try_resolve_dispute(&quest_id, &initiator, &arbitrator, &false, &0u32);
     assert!(result.is_err(), "resolving a non-existent dispute must be rejected");
 }
 
@@ -524,7 +523,7 @@ fn test_resolve_dispute_by_wrong_arbitrator_rejected() {
     client.open_dispute(&quest_id, &initiator, &arbitrator);
 
     // Wrong arbitrator → DisputeNotAuthorized (#84)
-    let result = client.try_resolve_dispute(let result = client.try_resolve_dispute(, false, 0u32);quest_id, let result = client.try_resolve_dispute(, false, 0u32);initiator, let result = client.try_resolve_dispute(, false, 0u32);wrong_arbitrator, let result = client.try_resolve_dispute(, false, 0u32);false, let result = client.try_resolve_dispute(, false, 0u32);0u32);
+    let result = client.try_resolve_dispute(&quest_id, &initiator, &arbitrator, &false, &0u32);
     assert!(result.is_err(), "resolve by wrong arbitrator must be rejected");
 }
 
