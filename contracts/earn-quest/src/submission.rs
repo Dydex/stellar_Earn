@@ -202,8 +202,7 @@ pub fn withdraw_submission(
     quest_id: &Symbol,
     submitter: &Address,
 ) -> Result<(), Error> {
-    submitter.require_auth();
-
+    // Auth handled at the entrypoint layer (lib.rs). Duplicate auth here is unnecessary.
 
     let quest = storage::get_quest(env, quest_id)?;
     validation::validate_quest_not_expired(env, quest.deadline)?;
@@ -219,6 +218,7 @@ pub fn withdraw_submission(
         &SubmissionStatus::Withdrawn,
     )?;
 
+    // Transition: Rejected -> Withdrawn (allows future re-submission)
     submission.status = SubmissionStatus::Withdrawn;
     storage::set_submission(env, quest_id, submitter, &submission);
 
