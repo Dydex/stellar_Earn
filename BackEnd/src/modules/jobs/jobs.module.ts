@@ -21,6 +21,7 @@ import { DataExportListener } from './listeners/data-export.listener';
 import { Payout } from '../payouts/entities/payout.entity';
 import { Quest } from '../quests/entities/quest.entity';
 import { StellarModule } from '../stellar/stellar.module';
+import { AnalyticsModule } from '../analytics/analytics.module';
 import { DependencyFreshnessService } from '../../common/services/dependency-freshness.service';
 
 @Module({
@@ -36,6 +37,7 @@ import { DependencyFreshnessService } from '../../common/services/dependency-fre
     ]),
     EventEmitterModule,
     StellarModule,
+    AnalyticsModule,
   ],
   providers: [
     JobsService,
