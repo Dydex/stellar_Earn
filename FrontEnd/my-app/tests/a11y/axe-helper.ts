@@ -10,7 +10,7 @@ export interface AxeSmokeOptions {
   disableRules?: string[];
 }
 
-const DEFAULT_DISABLED_RULES = ['color-contrast', 'aria-label'];
+const DEFAULT_DISABLED_RULES = ['color-contrast'];
 
 export async function runAxeSmoke(options: AxeSmokeOptions) {
   const {
