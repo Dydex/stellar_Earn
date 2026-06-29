@@ -17,7 +17,7 @@
  * - Consumers can call `recheckApi()` to trigger an on-demand probe.
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import { getApiClient } from '../api/client';
 import { useStore } from '@/lib/store';
 
@@ -40,12 +40,16 @@ export interface NetworkStatus {
 export function useNetworkStatus(): NetworkStatus {
   const setOnlineStatus = useStore((s) => s.setOnlineStatus);
   const setApiReachable = useStore((s) => s.setApiReachable);
-
   const storeIsOnline = useStore((s) => s.isOnline);
   const storeIsApiReachable = useStore((s) => s.isApiReachable);
 
-  // Local shadow of `isOnline` so we can read it synchronously inside
-  // callbacks without stale closure issues.
+  // Keep a stable ref to the store setters so probeApi never needs to be
+  // recreated just because the selector reference changed.
+  const setApiReachableRef = useRef(setApiReachable);
+  setApiReachableRef.current = setApiReachable;
+
+  // isOnlineRef lets us read the current value synchronously inside callbacks
+  // without a stale-closure issue.
   const isOnlineRef = useRef<boolean>(
     typeof navigator !== 'undefined' ? navigator.onLine : true
   );
@@ -64,7 +68,7 @@ export function useNetworkStatus(): NetworkStatus {
       isOnlineRef.current = false;
       setOnlineStatus(false);
       // When we go offline the API is immediately unreachable.
-      setApiReachable(false);
+      setApiReachableRef.current(false);
     };
 
     // Sync initial state in case it changed before mount.
@@ -78,10 +82,10 @@ export function useNetworkStatus(): NetworkStatus {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, [setOnlineStatus, setApiReachable]);
+  }, [setOnlineStatus]);
 
   // -----------------------------------------------------------------------
-  // API health probe
+  // API health probe — stable, never recreated
   // -----------------------------------------------------------------------
 
   const probeApi = useCallback(async () => {
@@ -91,11 +95,11 @@ export function useNetworkStatus(): NetworkStatus {
       await getApiClient().get('/health', {
         timeout: HEALTH_CHECK_TIMEOUT_MS,
       });
-      setApiReachable(true);
+      setApiReachableRef.current(true);
     } catch {
-      setApiReachable(false);
+      setApiReachableRef.current(false);
     }
-  }, [setApiReachable]);
+  }, []); // intentionally empty — stable for the lifetime of the hook
 
   // -----------------------------------------------------------------------
   // Periodic health checks + immediate probe when coming back online
@@ -117,7 +121,7 @@ export function useNetworkStatus(): NetworkStatus {
 
   useEffect(() => {
     const handleNetworkUnreachable = () => {
-      setApiReachable(false);
+      setApiReachableRef.current(false);
     };
 
     window.addEventListener('network-unreachable', handleNetworkUnreachable);
@@ -127,7 +131,7 @@ export function useNetworkStatus(): NetworkStatus {
         handleNetworkUnreachable
       );
     };
-  }, [setApiReachable]);
+  }, []);
 
   return {
     isOnline: storeIsOnline,
