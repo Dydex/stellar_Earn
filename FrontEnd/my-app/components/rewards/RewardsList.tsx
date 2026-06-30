@@ -67,7 +67,7 @@ export function RewardsList() {
 
   const SortIcon = ({ field }: { field: SortField }) =>
     sortField !== field ? null : (
-      <span className="ml-1 text-[#089ec3]">
+      <span className="ml-1 text-primary">
         {sortDir === 'asc' ? '↑' : '↓'}
       </span>
     );
@@ -118,13 +118,13 @@ export function RewardsList() {
                 <thead className="border-b border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-800/50">
                   <tr>
                     <th
-                      className="px-4 py-3 font-semibold text-zinc-900 dark:text-zinc-50 cursor-pointer select-none hover:text-[#089ec3]"
+                      className="px-4 py-3 font-semibold text-zinc-900 dark:text-zinc-50 cursor-pointer select-none hover:text-primary"
                       onClick={() => toggleSort('createdAt')}
                     >
                       Date <SortIcon field="createdAt" />
                     </th>
                     <th
-                      className="px-4 py-3 font-semibold text-zinc-900 dark:text-zinc-50 cursor-pointer select-none hover:text-[#089ec3]"
+                      className="px-4 py-3 font-semibold text-zinc-900 dark:text-zinc-50 cursor-pointer select-none hover:text-primary"
                       onClick={() => toggleSort('amount')}
                     >
                       Amount <SortIcon field="amount" />
@@ -180,7 +180,7 @@ export function RewardsList() {
                                   p.transactionHash!
                                 )
                               }
-                              className="text-zinc-400 hover:text-[#089ec3] transition-colors"
+                              className="text-zinc-400 hover:text-primary transition-colors"
                               title="Copy hash"
                               aria-label="Copy transaction hash"
                             >

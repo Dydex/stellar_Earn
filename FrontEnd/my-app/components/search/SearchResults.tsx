@@ -185,7 +185,7 @@ export function SearchResults({
                     onClick={onResultClick}
                     className={`block w-full rounded px-2 py-2 text-left ${
                       highlightedIndex === currentIndex
-                        ? 'bg-[#089ec3]/10 dark:bg-[#089ec3]/20'
+                        ? 'bg-primary/10 dark:bg-primary/20'
                         : 'hover:bg-zinc-100 dark:hover:bg-zinc-700'
                     }`}
                   >
@@ -193,7 +193,7 @@ export function SearchResults({
                       <div
                         className={`mt-0.5 ${
                           highlightedIndex === currentIndex
-                            ? 'text-[#089ec3]'
+                            ? 'text-primary'
                             : 'text-zinc-400 dark:text-zinc-500'
                         }`}
                       >
