@@ -135,6 +135,7 @@ fuzz_target!(|data: DecodingInput| {
                     reward_amount: data.reward_amount.abs().max(1),
                     verifier,
                     deadline: env.ledger().timestamp().saturating_add(data.deadline_offset.max(60)),
+                    grace_period_seconds: None,
                 });
             }
         }
