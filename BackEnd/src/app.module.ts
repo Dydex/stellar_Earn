@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { DataSource } from 'typeorm';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -35,6 +36,27 @@ import { WebhooksModule } from './modules/webhooks/webhooks.module';
 import { WebsocketModule } from './modules/websocket/websocket.module';
 import { TraceInterceptor } from './modules/trace/trace.interceptor';
 import { EventsModule } from './events/events.module';
+import { shouldInitializeDatabaseConnection } from './config/database.config';
+
+const typeOrmImports = shouldInitializeDatabaseConnection()
+  ? [TypeOrmModule.forRoot(dataSourceOptions)]
+  : [];
+
+const dataSourceProvider = shouldInitializeDatabaseConnection()
+  ? []
+  : [
+      {
+        provide: DataSource,
+        useFactory: () =>
+          new DataSource({
+            type: 'postgres',
+            url: process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/postgres',
+            entities: [],
+            synchronize: false,
+            logging: false,
+          }),
+      },
+    ];
 
 @Module({
   imports: [
@@ -42,7 +64,7 @@ import { EventsModule } from './events/events.module';
       isGlobal: true,
       envFilePath: '.env',
     }),
-    TypeOrmModule.forRoot(dataSourceOptions),
+    ...typeOrmImports,
     LoggerModule.forRoot(),
     EventsModule,
     AdminModule,
@@ -74,6 +96,7 @@ import { EventsModule } from './events/events.module';
     AppLoggerService,
     SecurityMiddleware,
     StartupReadinessService,
+    ...dataSourceProvider,
     {
       provide: APP_INTERCEPTOR,
       useClass: TraceInterceptor,
