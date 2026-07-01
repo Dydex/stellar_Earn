@@ -2,7 +2,11 @@
 
 import { useState, useCallback } from 'react';
 import { z } from 'zod';
-import type { QuestFormData, QuestCategory, QuestDifficulty } from '@/lib/types/admin';
+import type {
+  QuestFormData,
+  QuestCategory,
+  QuestDifficulty,
+} from '@/lib/types/admin';
 
 const questSchema = z.object({
   title: z
@@ -13,9 +17,7 @@ const questSchema = z.object({
     .string()
     .min(1, 'Short description is required')
     .max(200, 'Short description must be less than 200 characters'),
-  description: z
-    .string()
-    .min(20, 'Description must be at least 20 characters'),
+  description: z.string().min(20, 'Description must be at least 20 characters'),
   category: z.enum([
     'Development',
     'Blockchain',
@@ -36,7 +38,10 @@ const questSchema = z.object({
   deadline: z
     .string()
     .min(1, 'Deadline is required')
-    .refine((val) => new Date(val) > new Date(), 'Deadline must be in the future'),
+    .refine(
+      (val) => new Date(val) > new Date(),
+      'Deadline must be in the future'
+    ),
   maxParticipants: z
     .number()
     .min(1, 'Must allow at least 1 participant')
@@ -77,7 +82,9 @@ const defaultFormData: QuestFormData = {
 interface QuestFormProps {
   mode: 'create' | 'edit';
   initialData?: Partial<QuestFormData>;
-  onSubmit: (data: QuestFormData) => Promise<{ success: boolean; error?: string }>;
+  onSubmit: (
+    data: QuestFormData
+  ) => Promise<{ success: boolean; error?: string }>;
   onCancel?: () => void;
   isSubmitting: boolean;
 }
@@ -117,12 +124,17 @@ export function QuestForm({
     []
   );
 
-  const handleRequirementChange = useCallback((index: number, value: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      requirements: prev.requirements.map((r, i) => (i === index ? value : r)),
-    }));
-  }, []);
+  const handleRequirementChange = useCallback(
+    (index: number, value: string) => {
+      setFormData((prev) => ({
+        ...prev,
+        requirements: prev.requirements.map((r, i) =>
+          i === index ? value : r
+        ),
+      }));
+    },
+    []
+  );
 
   const addRequirement = useCallback(() => {
     setFormData((prev) => ({
@@ -173,7 +185,9 @@ export function QuestForm({
         requirements: formData.requirements
           .map((r) => r.trim())
           .filter((r) => r.length > 0),
-        tags: formData.tags.map((t) => t.trim().toLowerCase()).filter((t) => t.length > 0),
+        tags: formData.tags
+          .map((t) => t.trim().toLowerCase())
+          .filter((t) => t.length > 0),
       };
 
       const result = questSchema.safeParse(cleanedData);
@@ -209,7 +223,9 @@ export function QuestForm({
     <form onSubmit={handleSubmit} className="space-y-5">
       {submitError && (
         <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
-          <p className="text-sm text-red-600 dark:text-red-400">{submitError}</p>
+          <p className="text-sm text-red-600 dark:text-red-400">
+            {submitError}
+          </p>
         </div>
       )}
 
@@ -247,7 +263,9 @@ export function QuestForm({
         />
         <div className="mt-1 flex justify-between">
           {fieldErrors.shortDescription ? (
-            <p className="text-sm text-red-500">{fieldErrors.shortDescription}</p>
+            <p className="text-sm text-red-500">
+              {fieldErrors.shortDescription}
+            </p>
           ) : (
             <span />
           )}
@@ -315,7 +333,9 @@ export function QuestForm({
             ))}
           </select>
           {fieldErrors.difficulty && (
-            <p className="mt-1 text-sm text-red-500">{fieldErrors.difficulty}</p>
+            <p className="mt-1 text-sm text-red-500">
+              {fieldErrors.difficulty}
+            </p>
           )}
         </div>
       </div>
