@@ -1064,7 +1064,11 @@ impl EarnQuestContract {
     }
 
     /// Sets the minimum seconds between unpause and the next pause (SuperAdmin only).
-    pub fn set_pause_cooldown_seconds(env: Env, caller: Address, seconds: u64) -> Result<(), Error> {
+    pub fn set_pause_cooldown_seconds(
+        env: Env,
+        caller: Address,
+        seconds: u64,
+    ) -> Result<(), Error> {
         security::set_pause_cooldown_seconds(&env, &caller, seconds)
     }
 

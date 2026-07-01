@@ -928,9 +928,7 @@ pub fn set_last_unpause_timestamp(env: &Env, ts: u64) {
 }
 
 pub fn get_last_unpause_timestamp(env: &Env) -> Option<u64> {
-    env.storage()
-        .instance()
-        .get(&DataKey::LastUnpauseTimestamp)
+    env.storage().instance().get(&DataKey::LastUnpauseTimestamp)
 }
 
 pub fn set_pause_cooldown_seconds(env: &Env, seconds: u64) {
